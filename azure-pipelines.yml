@@ -5,15 +5,44 @@
 
 pool:
   vmImage: 'Ubuntu 16.04'
-
+  
 steps:
-- task: NodeTool@0
+- task: Npm@1
+  displayName: 'npm Angular CLI'
   inputs:
-    versionSpec: '8.x'
-  displayName: 'Install Node.js'
+    command: custom
+    workingDir: '$(System.DefaultWorkingDirectory)'
+    verbose: true
+    customCommand: 'install @angular/cli'
 
-- script: |
-    npm install @angular/cli -g
-    npm install
-    npm run build
-  displayName: 'npm install and build'
+- task: Npm@1
+  displayName: 'npm install'
+  inputs:
+    workingDir: '$(System.DefaultWorkingDirectory)'
+    verbose: true
+
+- task: Npm@1
+  displayName: 'npm Run Build'
+  inputs:
+    command: custom
+    workingDir: '$(System.DefaultWorkingDirectory)'
+    verbose: true
+    customCommand: 'run build'
+
+- task: ArchiveFiles@2
+  displayName: 'Archive $(System.DefaultWorkingDirectory)/dist/'
+  inputs:
+    rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist/'
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)\ArtifactsToBePublished'
+  inputs:
+    SourceFolder: '$(Build.ArtifactStagingDirectory)'
+    Contents: '$(Build.BuildId).zip'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)\ArtifactsToBePublished'
+
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\ArtifactsToBePublished'
